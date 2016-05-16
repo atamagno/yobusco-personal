@@ -1,0 +1,29 @@
+<div class="service-supplier-header-container">
+    <div class="pull-right leave-review-button-container" data-ng-show="authentication.user">
+        <a data-ng-click="openReviewModal()" class="btn btn-success">Deja un comentario</a>
+    </div>
+    <h1>Comentarios</h1>
+</div>
+<br>
+<div class="well">
+
+    <div data-ng-hide="reviews.length">No hay comentarios</div>
+
+    <div class="row" data-ng-repeat="review in reviews">
+        <div class="col-md-12">
+            <br>
+            <span class="glyphicon glyphicon-star"></span>
+            <span class="glyphicon glyphicon-star"></span>
+            <span class="glyphicon glyphicon-star"></span>
+            <span class="glyphicon glyphicon-star"></span>
+            <span class="glyphicon glyphicon-star-empty"></span>
+            An&#243;nimo
+            <span class="pull-right">
+                <span class="glyphicon glyphicon-time"></span>
+                {{ review.created | date: 'medium' }}
+            </span>
+            <p>{{review.comment}}</p>
+        </div>
+    </div>
+
+</div>

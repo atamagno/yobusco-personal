@@ -1,0 +1,129 @@
+.home-screen-container {
+    padding-top: 40px;
+}
+
+.home-logo {
+    width: 20%;
+    height: 20%
+}
+
+.search-input {
+    width: 900px;
+    margin: 0 auto;
+}
+
+.advanced-search-link-container {
+    width: 100%;
+    position: relative;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.advanced-search-link {
+    position: absolute;
+    right: 0;
+    padding: 5px 5px 0 0;
+}
+
+.filters-container {
+    width: 80%;
+    margin: 0 auto;
+    margin-top: 25px;
+    position: relative;
+}
+
+.dropdown-item {
+    cursor: pointer;
+}
+
+.search-button {
+    position: absolute;
+    margin-right: 24px;
+    right: 0;
+}
+
+.loading-container {
+    text-align: center;
+    padding: 60px 0;
+}
+
+.loading-img {
+    padding-bottom: 20px;
+}
+
+.search-result-container {
+    display: flex;
+}
+
+.search-result-img {
+    width: 20%;
+}
+
+.search-result-details {
+    padding-left: 10px;
+    position: relative;
+    width: 80%;
+}
+
+.search-results-details-header {
+    padding-bottom: 5px;
+}
+
+.search-results-details-body {
+    padding-bottom: 10px;
+}
+
+.search-results-supplier-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-results-details-footer {
+    color: #d17581;
+}
+
+.search-result-display-name {
+    display: flex;
+    position: relative;
+    color: midnightblue;
+}
+
+.pagination-container {
+    text-align: center;
+}
+
+.service-filter-label {
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.filter-divider {
+    border-bottom: 1px solid #E0E0E0;
+    padding-top: 10px;
+}
+
+.job-count-filter-label {
+    padding: 6px 6px 6px 0px;
+}
+
+.job-count-filter-input {
+    width: 80px;
+}
+
+.ratings-filter-container {
+    display: flex;
+    position: relative;
+}
+
+.ratings-filter-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 50%;
+    white-space: nowrap;
+}
+
+.ratings-filter-option {
+    position: absolute;
+    right: 0;
+}

@@ -1,0 +1,15 @@
+{
+  "name": "yobusco",
+  "version": "1.0.0",
+  "dependencies": {
+    "angular": "~1.4.x",
+    "angular-animate": "~1.4.x",
+    "angular-resource": "~1.4.x",
+    "angular-ui-utils": "~0.2.x",
+    "angular-ui-router": "~0.2.x",
+    "angular-bootstrap": "~0.14.x",
+    "ng-file-upload": "~10.0.x",
+    "angular-i18n": "1.x",
+    "bootstrap": "~3"
+  }
+}
