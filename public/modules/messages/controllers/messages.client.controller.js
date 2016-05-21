@@ -2,77 +2,98 @@
 
 // Messages controller
 angular.module('messages').controller('MessagesController',
-	function($scope, $stateParams, $location, Authentication, Messages, ServiceSuppliers) {
+	function($scope, $rootScope, $state, $stateParams, Authentication, Messages, MessageSearch, ServiceSuppliers, Alerts, UsersAdmin) {
 		$scope.authentication = Authentication;
+		$scope.alerts = Alerts;
 
-		$scope.selectedServiceSupplier = undefined;
-		ServiceSuppliers.query().$promise.then(function(servicesuppliers) {
-			$scope.servicesuppliers = servicesuppliers;
-			if ($stateParams.servicesupplierId) {
-				for (var i = 0; i < servicesuppliers.length; i++) {
-					if (servicesuppliers[i]._id === $stateParams.servicesupplierId) {
-						$scope.selectedServiceSupplier = servicesuppliers[i];
-						break;
-					}
-				}
-			}
-		});
+		$scope.userId = $stateParams.userId;
+		if ($stateParams.userId) {
+			UsersAdmin.get({
+				userId: $stateParams.userId
+			}).$promise.then(function(user) {
+				$scope.selectedServiceSupplier = user.displayName;
+			});
+		}
+		else {
+			$scope.selectedServiceSupplier = undefined;
+			ServiceSuppliers.query().$promise.then(function(servicesuppliers) {
+				$scope.servicesuppliers = servicesuppliers;
+			});
+		}
 
 		// Create new Message
 		$scope.create = function() {
-			// Create new Message object
-			var message = new Messages ({
-				name: this.name
-			});
 
-			// Redirect after save
-			message.$save(function(response) {
-				$location.path('messages/' + response._id);
-
-				// Clear form fields
-				$scope.name = '';
-			}, function(errorResponse) {
-				$scope.error = errorResponse.data.message;
-			});
-		};
-
-		// Remove existing Message
-		$scope.remove = function(message) {
-			if ( message ) { 
-				message.$remove();
-
-				for (var i in $scope.messages) {
-					if ($scope.messages [i] === message) {
-						$scope.messages.splice(i, 1);
-					}
-				}
-			} else {
-				$scope.message.$remove(function() {
-					$location.path('messages');
-				});
+			if (!$scope.content)
+			{
+				Alerts.show('danger','El mensaje no puede estar vacio.');
+				return;
 			}
-		};
 
-		// Update existing Message
-		$scope.update = function() {
-			var message = $scope.message;
+			if (($scope.selectedServiceSupplier && $scope.selectedServiceSupplier._id) || ($scope.userId != '')) {
 
-			message.$update(function() {
-				$location.path('messages/' + message._id);
-			}, function(errorResponse) {
-				$scope.error = errorResponse.data.message;
-			});
+				// Create new Message object
+				var message = new Messages ({
+					content: this.content,
+					from: $scope.authentication.user._id,
+					to: $scope.userId != '' ? $scope.userId : $scope.selectedServiceSupplier.user._id
+				});
+
+				// Redirect after save
+				message.$save(function(response) {
+					Alerts.show('success','Mensaje enviado exitosamente');
+					$state.go('messages.view', { messageId: response._id});
+				}, function(errorResponse) {
+					$scope.error = errorResponse.data.message;
+					Alerts.show('danger', $scope.error);
+				});
+
+			} else {
+				Alerts.show('danger','Debes seleccionar un destinatario');
+			}
 		};
 
 		// Find a list of Messages
 		$scope.find = function() {
-			$scope.messages = Messages.query();
+			$scope.messagesCondition = $stateParams.condition;
+			$scope.messageListTitle = 'Todos los mensajes';
+			$scope.messageConditionLabel = '.';
+			switch ($scope.messagesCondition) {
+				case 'sent':
+					$scope.messageListTitle = 'Mensajes enviados';
+					$scope.messageConditionLabel = ' enviado.';
+					break;
+				case 'received':
+					$scope.messageListTitle = 'Mensajes recibidos';
+					$scope.messageConditionLabel = ' recibido.';
+					break;
+			}
+
+			MessageSearch.query({
+				userId: $scope.authentication.user._id,
+				condition: $scope.messagesCondition
+			}).$promise.then(function (response) {
+				$scope.messages = response;
+			});
 		};
 
 		// Find existing Message
 		$scope.findOne = function() {
-			$scope.message = Messages.get({ 
+			Messages.get({
 				messageId: $stateParams.messageId
+			}).$promise.then(function(message) {
+				$scope.message = message;
+				MessageSearch.query({
+					userId: $scope.authentication.user._id,
+					condition: 'received'
+				}).$promise.then(function (response) {
+					var unreadMessages = response.filter(getUnread);
+					$rootScope.$broadcast('updateUnread', unreadMessages.length);
+				});
 			});
 		};
+
+		function getUnread(message) {
+			return !message.read;
+		}
 	});

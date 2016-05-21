@@ -3,10 +3,9 @@
 
         <p class="lead">Mensajes</p>
         <div class="list-group">
-            <a ui-sref=".create" class="list-group-item">Crear mensaje</a>
-            <a ui-sref=".list()" class="list-group-item">Todos los mensajes</a>
-            <a ui-sref=".list()" class="list-group-item">Mensajes leidos</a>
-            <a ui-sref=".list()" class="list-group-item">Mensajes enviados</a>
+            <a ui-sref=".create()" class="list-group-item">Crear mensaje</a>
+            <a ui-sref=".list({ condition: 'received' })" class="list-group-item">Recibidos</a>
+            <a ui-sref=".list({ condition: 'sent' })" class="list-group-item">Enviados</a>
         </div>
 
     </div>

@@ -1,13 +1,11 @@
 'use strict';
 
-//Messages service used to communicate Messages REST endpoints
-angular.module('messages').factory('Messages', ['$resource',
-	function($resource) {
-		return $resource('messages/:messageId', { messageId: '@_id'
-		}, {
-			update: {
-				method: 'PUT'
-			}
+angular.module('messages')
+	.factory('Messages',
+		function($resource) {
+			return $resource('messages/:messageId', { messageId: '@_id' }, { update: { method: 'PUT' } });
+		})
+	.factory('MessageSearch',
+		function($resource) {
+			return $resource('messages-by-user/:userId/:condition', { userId: '@_id'})
 		});
-	}
-]);

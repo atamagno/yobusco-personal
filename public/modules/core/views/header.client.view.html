@@ -6,8 +6,8 @@
 		<ul class="nav navbar-nav">
 			<li><a ui-sref="jobs.list({ status: 'all' })" data-ng-if="menu.shouldRender(authentication.user);">Mis Trabajos</a></li>
 		</ul>
-		<ul class="nav navbar-nav">
-			<li><a ui-sref="messages.list()" data-ng-if="menu.shouldRender(authentication.user);">Mensajes <span class="badge">2</span></a></li>
+		<ul class="nav navbar-nav" data-ng-if="menu.shouldRender(authentication.user)">
+			<li><a ui-sref="messages.list({condition: 'received'})">Mensajes <span class="badge" data-ng-hide="newMessages == 0">{{newMessages}}</span></a></li>
 		</ul>
 		<ul class="nav navbar-nav" data-ng-if="menu.renderIfAdmin(authentication.user);">
 			<li><a ui-sref="admin.listUsers({ currentPage: 1, itemsPerPage: 5 })">Admin</a></li>

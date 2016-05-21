@@ -73,7 +73,7 @@ exports.delete = function(req, res) {
  * List of Messages
  */
 exports.list = function(req, res) { 
-	Message.find().sort('-created').populate('user', 'displayName').exec(function(err, messages) {
+	Message.find().sort('-created').populate('from', 'displayName').populate('to', 'displayName').exec(function(err, messages) {
 		if (err) {
 			return res.status(400).send({
 				message: errorHandler.getErrorMessage(err)
@@ -87,21 +87,44 @@ exports.list = function(req, res) {
 /**
  * Message middleware
  */
-exports.messageByID = function(req, res, next, id) { 
-	Message.findById(id).populate('user', 'displayName').exec(function(err, message) {
+exports.messageByID = function(req, res, next, id) {
+	Message.findById(id).populate('from', 'displayName').populate('to', 'displayName').exec(function(err, message) {
 		if (err) return next(err);
-		if (! message) return next(new Error('Failed to load Message ' + id));
-		req.message = message ;
-		next();
+		if (!message) return next(new Error('Failed to load Message ' + id));
+
+		if (message.read) {
+			req.message = message;
+			next();
+		}
+		else {
+			message.read = true;
+			message.save(function(err) {
+				if (err) {
+					return res.status(400).send({
+						message: errorHandler.getErrorMessage(err)
+					});
+				} else {
+					req.message = message;
+					next();
+				}
+			});
+		}
 	});
 };
 
-/**
- * Message authorization middleware
- */
-exports.hasAuthorization = function(req, res, next) {
-	if (req.message.user.id !== req.user.id) {
-		return res.status(403).send('User is not authorized');
-	}
-	next();
+exports.listByUser = function(req, res) {
+
+	var userId = req.params.userId;
+	var messageCondition = req.params.condition;
+
+	var searchCondition = (messageCondition == 'sent') ? { from: userId } : { to: userId };
+	Message.find(searchCondition).sort('-created').populate('to', 'displayName').populate('from', 'displayName').exec(function(err, messages) {
+		if (err) {
+			return res.status(400).send({
+				message: errorHandler.getErrorMessage(err)
+			});
+		} else {
+			res.jsonp(messages);
+		}
+	});
 };

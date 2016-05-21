@@ -10,15 +10,15 @@ angular.module('messages').config(
 				templateUrl: 'modules/messages/views/messages.client.view.html',
 			}).
 			state('messages.list', {
-				url: '/messages',
+				url: '/list/:condition',
 				templateUrl: 'modules/messages/views/list-messages.client.view.html'
 			}).
 			state('messages.create', {
-				url: '/messages/create',
+				url: '/create/:userId',
 				templateUrl: 'modules/messages/views/create-message.client.view.html'
 			}).
 			state('messages.view', {
-				url: '/messages/:messageId',
+				url: '/view/:messageId',
 				templateUrl: 'modules/messages/views/view-message.client.view.html'
 			});
 	});

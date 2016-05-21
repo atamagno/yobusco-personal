@@ -9,11 +9,10 @@ module.exports = function(app) {
 		.get(messages.list)
 		.post(users.requiresLogin, messages.create);
 
-	app.route('/messages/:messageId')
-		.get(messages.read)
-		.put(users.requiresLogin, messages.hasAuthorization, messages.update)
-		.delete(users.requiresLogin, messages.hasAuthorization, messages.delete);
+	app.route('/messages/:messageId').get(messages.read);
 
 	// Finish by binding the Message middleware
 	app.param('messageId', messages.messageByID);
+
+	app.route('/messages-by-user/:userId/:condition').get(messages.listByUser);
 };
