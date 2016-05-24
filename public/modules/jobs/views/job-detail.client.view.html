@@ -7,8 +7,14 @@
             <h1>
                 Detalle de trabajo
                 <small>{{job.name}}</small>
-                <a data-ng-show="!job.status.finished && authentication.user && (authentication.user.username === job.user.username)"
+                <a data-ng-show="!job.status.finished && job.status.keyword != 'pending' && authentication.user && (authentication.user.username === job.user.username)"
                    ui-sref="jobs.edit({ jobId: job._id })" class="btn btn-success pull-right">Actualizar trabajo</a>
+
+                <a data-ng-show="job.status.keyword == 'pending' && authentication.user && (authentication.user._id !== job.createdBy)"
+                   data-ng-click="openApproveJobModal()" class="btn btn-success pull-right">Aprobar trabajo</a>
+
+                <a data-ng-disabled="true" data-ng-show="job.status.keyword == 'pending' && authentication.user && (authentication.user._id === job.createdBy)"
+                   class="btn btn-info pull-right">Esperando aprobaci&#243;n</a>
             </h1>
         </div>
     </div>
@@ -45,7 +51,7 @@
             <br>
             <div class="upload-image-header-container">
                 <div class="pull-right btn-upload-image">
-                    <button data-ng-click="openUploadImagesModal()" data-ng-show="authentication.user && (authentication.user.username === job.user.username)" type="button" class="btn btn-primary">
+                    <button data-ng-click="openUploadImagesModal()" data-ng-show="job.status.keyword != 'pending' && authentication.user && (authentication.user.username === job.user.username)" type="button" class="btn btn-primary">
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Agregar im&#225;genes
                     </button>
                 </div>
@@ -181,6 +187,19 @@
         <div class="modal-footer">
             <button class="btn btn-primary" type="button" data-ng-click="delete()">Eliminar</button>
             <button class="btn btn-default" type="button" data-ng-click="close()">Cerrar</button>
+        </div>
+    </script>
+
+    <script type="text/ng-template" id="approveJobModal">
+        <div class="modal-header">
+            <h3 class="modal-title">Aprobar Trabajo</h3>
+        </div>
+        <div class="modal-body">
+            Est&#225;s seguro de que quieres aprobar el trabajo?
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" type="button" data-ng-click="ok()">OK</button>
+            <button class="btn btn-default" type="button" data-ng-click="cancel()">Cancelar</button>
         </div>
     </script>
 

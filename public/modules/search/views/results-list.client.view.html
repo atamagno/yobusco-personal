@@ -19,27 +19,32 @@
                     <div class="search-result-details">
                         <div class="search-results-details-header">
                             <strong class="pull-right">
-                                <ng-pluralize count="servicesupplier.jobCount"
+                                <p>
+                                    <span class="label label-success">1 Terminados</span>
+                                    <span class="label label-primary">1 En Progreso</span>
+                                    <span class="label label-danger">0 Abandonados</span>
+                                </p>
+                                <!--<ng-pluralize count="servicesupplier.jobCount"
                                               when="{'0': '0 trabajos',
                                                      '1': '{{servicesupplier.jobCount}} trabajo',
                                                      'other': '{{servicesupplier.jobCount}} trabajos'}">
-                                </ng-pluralize>
+                                </ng-pluralize>-->
                             </strong>
 
                             <div class="search-result-display-name">{{servicesupplier.display_name}}</div>
                         </div>
 
-                        <div class="search-results-details-body">
+                        <div class="search-results-details-body" data-ng-show="authentication.user">
                             <p class="search-results-supplier-name">{{servicesupplier.description}}</p>
                             <strong>Email: </strong> {{servicesupplier.email}}<br>
                             <strong>Tel&#233;fono: </strong> {{servicesupplier.phone_number}}
                         </div>
 
-                        <p>
-                            <span class="label label-success">1 Terminados</span>
-                            <span class="label label-primary">1 En Progreso</span>
-                            <span class="label label-danger">0 Abandonados</span>
-                        </p>
+                        <div class="search-results-details-body" data-ng-show="!authentication.user">
+                            <p class="search-results-supplier-name">{{servicesupplier.description}}</p>
+                            <strong>Email: </strong> ...<br>
+                            <strong>Tel&#233;fono: </strong> ...
+                        </div>
 
                         <div class="search-results-details-footer">
                             <div class="pull-right">
@@ -51,6 +56,7 @@
                             </div>
 
                             <uib-rating data-ng-model="servicesupplier.overall_rating" max="5" readonly="true"></uib-rating>
+                            <span>{{servicesupplier.overall_rating}} estrellas</span>
                         </div>
                     </div>
                 </div>

@@ -97,7 +97,12 @@ exports.messageByID = function(req, res, next, id) {
 			next();
 		}
 		else {
-			message.read = true;
+			var user = req.user;
+			if (user.displayName == message.to.displayName)
+			{
+				message.read = true;
+			}
+
 			message.save(function(err) {
 				if (err) {
 					return res.status(400).send({

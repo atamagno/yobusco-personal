@@ -12,10 +12,20 @@
         <div class="thumbnail">
             <img src="http://placehold.it/320x150" alt="">
             <div class="job-details-container">
-                <h4 class="pull-right status-label">{{job.status.name}}</h4>
-                <h4 class="job-name-container">
+
+                <span data-ng-show="job.status.keyword == 'finished'" class="pull-right status-label label label-success">{{job.status.name}}</span>
+                <span data-ng-show="job.status.keyword == 'abandoned'" class="pull-right status-label label label-danger">{{job.status.name}}</span>
+                <span data-ng-show="job.status.keyword == 'active'" class="pull-right status-label label label-primary">{{job.status.name}}</span>
+                <span data-ng-show="job.status.keyword == 'paused'" class="pull-right status-label label label-default">{{job.status.name}}</span>
+                <span data-ng-show="job.status.keyword == 'pending'" class="pull-right status-label label label-info">{{job.status.name}}</span>
+                <span data-ng-show="job.status.keyword == 'delayed'" class="pull-right status-label label label-warning">{{job.status.name}}</span>
+
+                <!--<h4 class="pull-right status-label">{{job.status.name}}</h4>-->
+
+                <div class="job-name-container">
                     <a href="" data-ng-click="navigateToJobDetails(job._id)">{{job.name}}</a>
-                </h4>
+                </div>
+
                 <div class="job-description-container">{{job.description}}</div>
                 <strong>Prestador de servicios:</strong><br>
                 <span>{{ job.service_supplier.display_name }}</span>

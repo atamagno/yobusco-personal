@@ -2,7 +2,7 @@
 
 // Messages controller
 angular.module('messages').controller('MessagesController',
-	function($scope, $rootScope, $state, $stateParams, Authentication, Messages, MessageSearch, ServiceSuppliers, Alerts, UsersAdmin) {
+	function($scope, $rootScope, $state, $stateParams, Authentication, Messages, MessageSearch, ServiceSuppliers, $uibModal, Alerts, UsersAdmin) {
 		$scope.authentication = Authentication;
 		$scope.alerts = Alerts;
 
@@ -20,6 +20,18 @@ angular.module('messages').controller('MessagesController',
 				$scope.servicesuppliers = servicesuppliers;
 			});
 		}
+
+		$scope.openCreateMessageModal = function () {
+
+			var modalInstance = $uibModal.open({
+				templateUrl: 'createMessageModal',
+				controller: 'CreateMessageModalInstanceCtrl'
+			});
+
+			modalInstance.result.then(function () {
+				$scope.create()
+			});
+		};
 
 		// Create new Message
 		$scope.create = function() {
@@ -42,7 +54,7 @@ angular.module('messages').controller('MessagesController',
 				// Redirect after save
 				message.$save(function(response) {
 					Alerts.show('success','Mensaje enviado exitosamente');
-					$state.go('messages.view', { messageId: response._id});
+					$state.go("messages.list", { condition: 'sent'});
 				}, function(errorResponse) {
 					$scope.error = errorResponse.data.message;
 					Alerts.show('danger', $scope.error);
@@ -96,4 +108,16 @@ angular.module('messages').controller('MessagesController',
 		function getUnread(message) {
 			return !message.read;
 		}
+	});
+
+angular.module('messages').controller('CreateMessageModalInstanceCtrl',
+	function ($scope, $uibModalInstance) {
+
+		$scope.ok = function () {
+			$uibModalInstance.close();
+		};
+
+		$scope.cancel = function () {
+			$uibModalInstance.dismiss('cancel');
+		};
 	});

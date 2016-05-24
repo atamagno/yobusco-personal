@@ -2,9 +2,11 @@
 
 // UserJobs controller
 angular.module('jobs').controller('UserJobsController',
-	function($scope, $stateParams, $state, Authentication, Jobs, JobSearch, JobStatus, ServiceSuppliers, Reviews, $uibModal, Alerts) {
+	function($scope, $stateParams, $state, Authentication, Jobs, JobSearch, JobStatus, ServiceSuppliers, Reviews, $uibModal, Alerts, UserSearch) {
 		$scope.authentication = Authentication;
 		$scope.alerts = Alerts;
+
+		$scope.isServiceSupplier = $scope.authentication.user.roles.indexOf('servicesupplier') != -1;
 
 		JobStatus.query().$promise.then(function (statuses) {
 			for (var i = 0; i < statuses.length; i++) {
@@ -14,8 +16,12 @@ angular.module('jobs').controller('UserJobsController',
 				}
 			}
 
-			$scope.jobstatuses = statuses;
+			$scope.jobstatuses = statuses.filter(filterPendingStatus);
 		});
+
+		function filterPendingStatus(status) {
+			return status.keyword != 'pending';
+		}
 
 		$scope.selectedServiceSupplier = undefined;
 		ServiceSuppliers.query().$promise.then(function(servicesuppliers) {
@@ -33,36 +39,64 @@ angular.module('jobs').controller('UserJobsController',
 		// Create new Job
 		$scope.create = function() {
 
-			if ($scope.selectedServiceSupplier && $scope.selectedServiceSupplier._id) {
+			if ($scope.isServiceSupplier) {
+				if ($scope.selectedUserName) {
+					UserSearch.query({
+						userName: $scope.selectedUserName
+					}).$promise.then(function (users) {
+						if (users.length == 1) {
 
-				// Create new Job object
-				var job = new Jobs({
-					name: this.name,
-					description: this.description,
-					start_date: this.start_date,
-					expected_date: this.expected_date,
-					status: $scope.defaultStatus._id,
-					service_supplier: $scope.selectedServiceSupplier._id
-				});
+							for (var i = 0; i < $scope.servicesuppliers.length; i++) {
+								if ($scope.servicesuppliers[i].user._id === $scope.authentication.user._id) {
+									$scope.selectedServiceSupplier = $scope.servicesuppliers[i];
+									break;
+								}
+							}
 
-				// Redirect after save
-				job.$save(function (response) {
-					$state.go('jobs.viewDetail', { jobId: response._id});
+							saveJob(users[0]._id, $scope.selectedServiceSupplier._id);
+						}
+						else {
+							Alerts.show('danger','El nombre de usuario no existe.');
+						}
+					});
+				}
+				else
+				{
+					Alerts.show('danger','Debes ingresar un nombre de usuario.');
+				}
+			}
+			else {
+				if ($scope.selectedServiceSupplier && $scope.selectedServiceSupplier._id) {
 
-					// Clear form fields
-					$scope.name = '';
-					$scope.description = '';
-					$scope.start_date = '';
-					$scope.expected_date = '';
-				}, function (errorResponse) {
-					$scope.error = errorResponse.data.message;
-					Alerts.show('danger', $scope.error);
-				});
+					saveJob($scope.authentication.user._id, $scope.selectedServiceSupplier._id);
 
-			} else {
-				Alerts.show('danger','Debes seleccionar un prestador de servicios');
+				} else {
+					Alerts.show('danger','Debes seleccionar un prestador de servicios');
+				}
 			}
 		};
+
+		function saveJob(userID, selectedServiceSupplierID) {
+
+			// Create new Job object
+			var job = new Jobs({
+				name: $scope.name,
+				description: $scope.description,
+				start_date: $scope.start_date,
+				expected_date: $scope.expected_date,
+				status: $scope.defaultStatus._id,
+				user: userID,
+				service_supplier: selectedServiceSupplierID
+			});
+
+			// Redirect after save
+			job.$save(function (response) {
+				$state.go('jobs.viewDetail', { jobId: response._id});
+			}, function (errorResponse) {
+				$scope.error = errorResponse.data.message;
+				Alerts.show('danger', $scope.error);
+			});
+		}
 
 		// Find existing Job
 		$scope.findOne = function() {
@@ -122,10 +156,42 @@ angular.module('jobs').controller('UserJobsController',
 
 			JobSearch.jobs.query({
 				jobUserId: $scope.authentication.user._id,
+				isServiceSupplier: $scope.isServiceSupplier,
 				status: $scope.jobstatus
 			}).$promise.then(function (response) {
 					$scope.jobs = response;
 				});
+		};
+
+		$scope.openApproveJobModal = function() {
+
+			var modalInstance = $uibModal.open({
+				templateUrl: 'approveJobModal',
+				controller: 'ApproveJobModalInstanceCtrl'
+			});
+
+			modalInstance.result.then(function () {
+				$scope.approveJob()
+			});
+		};
+
+		$scope.approveJob = function() {
+			var job = $scope.job;
+
+			// Get active status from list of statuses.
+			for (var i = 0; i < $scope.jobstatuses.length; i++) {
+				if ($scope.jobstatuses[i].keyword == 'active') {
+					job.status = $scope.jobstatuses[i];
+					break;
+				}
+			}
+			job.$update(function() {
+				Alerts.show('success','Trabajo aprobado exitosamente')
+				$state.go('jobs.viewDetail', { jobId: job._id});
+			}, function(errorResponse) {
+				$scope.error = errorResponse.data.message;
+				Alerts.show('danger',$scope.error);
+			});
 		};
 
 		$scope.navigateToJobDetails = function(jobId) {
@@ -223,6 +289,18 @@ angular.module('jobs').controller('UserJobsController',
 			}, function(errorResponse) {
 				$scope.error = errorResponse.data.message;
 				Alerts.show('danger',$scope.error);
+			});
+		};
+
+		$scope.openCreateJobModal = function () {
+
+			var modalInstance = $uibModal.open({
+				templateUrl: 'createJobModal',
+				controller: 'CreateJobModalInstanceCtrl'
+			});
+
+			modalInstance.result.then(function () {
+				$scope.create()
 			});
 		};
 
@@ -346,6 +424,18 @@ angular.module('jobs').controller('EditJobModalInstanceCtrl',
 		};
 	});
 
+angular.module('jobs').controller('CreateJobModalInstanceCtrl',
+	function ($scope, $uibModalInstance) {
+
+		$scope.ok = function () {
+			$uibModalInstance.close();
+		};
+
+		$scope.cancel = function () {
+			$uibModalInstance.dismiss('cancel');
+		};
+	});
+
 angular.module('jobs').controller('AddJobImagesModalInstanceCtrl',
 	function ($scope, $uibModalInstance, Upload, AmazonS3, job) {
 
@@ -409,6 +499,18 @@ angular.module('jobs').controller('OpenImagesModalInstanceCtrl',
 		};
 
 		$scope.close = function () {
+			$uibModalInstance.dismiss('cancel');
+		};
+	});
+
+angular.module('jobs').controller('ApproveJobModalInstanceCtrl',
+	function ($scope, $uibModalInstance) {
+
+		$scope.ok = function () {
+			$uibModalInstance.close();
+		};
+
+		$scope.cancel = function () {
 			$uibModalInstance.dismiss('cancel');
 		};
 	});
