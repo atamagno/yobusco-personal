@@ -36,24 +36,33 @@ angular.module('jobs').controller('UserJobsController',
 			}
 		});
 
+		function getServiceSupplierForUser() {
+
+			var serviceSupplier;
+			for (var i = 0; i < $scope.servicesuppliers.length; i++) {
+				if ($scope.servicesuppliers[i].user._id === $scope.authentication.user._id) {
+					serviceSupplier = $scope.servicesuppliers[i];
+					break;
+				}
+			}
+
+			return serviceSupplier;
+		}
+
 		// Create new Job
 		$scope.create = function() {
 
+			// if logged user is a service supplier
 			if ($scope.isServiceSupplier) {
 				if ($scope.selectedUserName) {
-					UserSearch.query({
+					UserSearch.get({
 						userName: $scope.selectedUserName
-					}).$promise.then(function (users) {
-						if (users.length == 1) {
+					}).$promise.then(function (user) {
+						if (user._id) {
 
-							for (var i = 0; i < $scope.servicesuppliers.length; i++) {
-								if ($scope.servicesuppliers[i].user._id === $scope.authentication.user._id) {
-									$scope.selectedServiceSupplier = $scope.servicesuppliers[i];
-									break;
-								}
-							}
+							$scope.selectedServiceSupplier = getServiceSupplierForUser();
 
-							saveJob(users[0]._id, $scope.selectedServiceSupplier._id);
+							saveJob(user._id, $scope.selectedServiceSupplier._id, false);
 						}
 						else {
 							Alerts.show('danger','El nombre de usuario no existe.');
@@ -68,7 +77,7 @@ angular.module('jobs').controller('UserJobsController',
 			else {
 				if ($scope.selectedServiceSupplier && $scope.selectedServiceSupplier._id) {
 
-					saveJob($scope.authentication.user._id, $scope.selectedServiceSupplier._id);
+					saveJob($scope.authentication.user._id, $scope.selectedServiceSupplier._id, true);
 
 				} else {
 					Alerts.show('danger','Debes seleccionar un prestador de servicios');
@@ -76,7 +85,7 @@ angular.module('jobs').controller('UserJobsController',
 			}
 		};
 
-		function saveJob(userID, selectedServiceSupplierID) {
+		function saveJob(userID, selectedServiceSupplierID, createdByUser) {
 
 			// Create new Job object
 			var job = new Jobs({
@@ -86,7 +95,8 @@ angular.module('jobs').controller('UserJobsController',
 				expected_date: $scope.expected_date,
 				status: $scope.defaultStatus._id,
 				user: userID,
-				service_supplier: selectedServiceSupplierID
+				service_supplier: selectedServiceSupplierID,
+				createdByUser: createdByUser
 			});
 
 			// Redirect after save

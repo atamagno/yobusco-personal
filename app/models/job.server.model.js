@@ -14,6 +14,10 @@ var JobSchema = new Schema({
 		type: Schema.ObjectId,
 		ref: 'User'
 	},
+	createdByUser: {
+		type: Boolean,
+		default: true
+	},
 	user: {
 		type: Schema.ObjectId,
 		ref: 'User'
@@ -54,6 +58,10 @@ var JobSchema = new Schema({
 	},
 	finish_date: {
 		type: Date
+	},
+	created_date: {
+		type: Date,
+		default: Date.now
 	},
 	pictures: [{
 		type: String,

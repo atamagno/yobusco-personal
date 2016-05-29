@@ -5,6 +5,7 @@
  */
 var _ = require('lodash'),
 	errorHandler = require('../errors.server.controller'),
+	mailer = require('../mailer.server.controller'),
 	mongoose = require('mongoose'),
 	passport = require('passport'),
 	User = mongoose.model('User');
@@ -31,6 +32,7 @@ exports.signup = function(req, res) {
 				message: errorHandler.getErrorMessage(err)
 			});
 		} else {
+
 			// Remove sensitive data before login
 			user.password = undefined;
 			user.salt = undefined;
@@ -39,6 +41,10 @@ exports.signup = function(req, res) {
 				if (err) {
 					res.status(400).send(err);
 				} else {
+
+					// TODO: see what we should do if email wasn't sent. Rollback? Resend option?
+					mailer.sendMail(res, 'user-created-email', { name: user.displayName }, 'Creacion de usuario', user.email);
+
 					res.json(user);
 				}
 			});

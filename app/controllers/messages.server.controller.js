@@ -5,6 +5,7 @@
  */
 var mongoose = require('mongoose'),
 	errorHandler = require('./errors.server.controller'),
+	mailer = require('./mailer.server.controller'),
 	Message = mongoose.model('Message'),
 	_ = require('lodash');
 
@@ -13,7 +14,6 @@ var mongoose = require('mongoose'),
  */
 exports.create = function(req, res) {
 	var message = new Message(req.body);
-	message.user = req.user;
 
 	message.save(function(err) {
 		if (err) {
@@ -21,7 +21,20 @@ exports.create = function(req, res) {
 				message: errorHandler.getErrorMessage(err)
 			});
 		} else {
-			res.jsonp(message);
+			Message.findOne(message)
+				.populate('to')
+				.populate('from').exec(function (err, message) {
+
+					// TODO: send email to sender user?
+					mailer.sendMail(res, 'new-message-email',
+						{
+							toName: message.to.displayName,
+							fromName: message.from.displayName,
+							message: message.content
+						}, 'Nuevo mensaje', message.to.email);
+
+					res.jsonp(message);
+			});
 		}
 	});
 };

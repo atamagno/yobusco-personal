@@ -101,13 +101,13 @@ exports.userForAdminByID = function(req, res, next, id) {
 
 exports.findByUserName  = function(req, res) {
 	var userName = req.params.userName;
-	User.find({username: userName}).exec(function (err, users) {
+	User.findOne({username: userName}).exec(function (err, user) {
 		if (err) {
 			return res.status(400).send({
 				message: errorHandler.getErrorMessage(err)
 			});
 		} else {
-			res.jsonp(users);
+			res.jsonp(user);
 		}
 	});
 };
