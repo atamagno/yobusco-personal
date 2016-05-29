@@ -1,30 +1,42 @@
 {
     "_id": ObjectId("56269183477f11b662a6dd88"),
     "name": "En Progreso",
+    "keyword": 'active',
     finished: false,
-    default: true
+    default: false
 }
 {
     "_id": ObjectId("56269183455f11b0b2a6dd88"),
     "name": "Pausado",
+    "keyword": 'paused',
     finished: false,
     default: false
 }
 {
     "_id": ObjectId("56264483477f11b0b2a6dd88"),
     "name": "Completado",
+    "keyword": 'finished',
     finished: true,
     default: false
 }
 {
     "_id": ObjectId("56269183477f11b0b2a99d88"),
     "name": "Demorado",
+    "keyword": 'delayed',
     finished: false,
     default: false
 }
 {
     "_id": ObjectId("56263383477f11b0b2a6dd88"),
     "name": "Abandonado",
+    "keyword": 'abandoned',
     finished: true,
     default: false
+}
+{
+    "_id": ObjectId("56263383477f128bb2a6dd88"),
+    "name": "Pendiente Aprobacion",
+    "keyword": 'pending',
+    finished: false,
+    default: true
 }

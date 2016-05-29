@@ -13,11 +13,16 @@
     <div class="service-supplier-details-container">
         <div class="caption-full">
             <strong class="pull-right">
-                <ng-pluralize count="jobs.length"
+                <!--<ng-pluralize count="jobs.length"
                               when="{'0': '0 trabajos',
                                      '1': '{{jobs.length}} trabajo',
                                      'other': '{{jobs.length}} trabajos'}">
-                </ng-pluralize>
+                </ng-pluralize>-->
+                <p>
+                    <span class="label label-success">1 Terminados</span>
+                    <span class="label label-primary">1 En Progreso</span>
+                    <span class="label label-danger">0 Abandonados</span>
+                </p>
             </strong>
             <small class="list-group-item-text">
                 Miembro desde
@@ -26,27 +31,29 @@
             <h4><a href="">{{servicesupplier.display_name}}</a></h4>
             <p>{{servicesupplier.description}}</p>
 
-            <strong>Email: </strong> {{servicesupplier.email}}<br>
-            <strong>Tel&#233;fono: </strong> {{servicesupplier.phone_number}}<br><br>
-
-            <label class="control-label">Servicios</label>
-            <div data-ng-repeat="servicesubcategory in servicesupplier.services">
-                - {{servicesubcategory.name}}<br>
+            <div data-ng-show="authentication.user">
+                <strong>Email: </strong> {{servicesupplier.email}}<br>
+                <strong>Tel&#233;fono: </strong> {{servicesupplier.phone_number}}<br><br>
             </div>
+
+            <div data-ng-show="!authentication.user">
+                <strong>Email: </strong> ...<br>
+                <strong>Tel&#233;fono: </strong> ...<br><br>
+            </div>
+
+            <label class="control-label">Servicios: </label>
+            <span data-ng-repeat="servicesubcategory in servicesupplier.services">
+                <span class="label label-default">{{servicesubcategory.name}}</span>
+            </span>
         </div>
 
-        <div class="ratings">
+        <!--<div class="ratings">
             <p class="pull-right">
                 <button type="button" class="btn btn-default btn-sm">
                     <span class="glyphicon glyphicon-thumbs-up"></span> Me Gusta
                 </button>
             </p>
-            <p>
-                <span class="label label-success">1 Terminados</span>
-                <span class="label label-primary">1 En Progreso</span>
-                <span class="label label-danger">0 Abandonados</span>
-            </p>
-        </div>
+        </div>-->
 
         <div class="ratings service-supplier-rating-count">
             <p class="pull-right">

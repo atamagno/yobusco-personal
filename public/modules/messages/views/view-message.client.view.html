@@ -1,0 +1,33 @@
+<section data-ng-controller="MessagesController" data-ng-init="findOne()">
+
+	<uib-alert type="{{alerts.type}}" close="alerts.close()" data-ng-show="alerts.visible" class="custom-alert">{{alerts.msg}}</uib-alert>
+
+	<div class="page-header">
+		<h4 data-ng-bind="message.content"></h4>
+	</div>
+	<div class="pull-right" data-ng-show="(authentication.user)">
+		<a data-ng-show="authentication.user && (authentication.user._id === message.from._id)" class="btn btn-primary"
+		   ui-sref="messages.create({ userId: message.to._id })">
+			<i class="glyphicon glyphicon-edit"></i>
+			Nuevo Mensaje
+		</a>
+		<a data-ng-show="authentication.user && (authentication.user._id !== message.from._id)" class="btn btn-primary" ui-sref="messages.create({ userId: message.from._id })">
+			<i class="glyphicon glyphicon-edit"></i>
+			Responder
+		</a>
+	</div>
+	<small>
+		<em class="text-muted">
+			Enviado el
+			<span data-ng-bind="message.created | date:'mediumDate'"></span>
+			<span data-ng-show="authentication.user && (authentication.user._id === message.from._id)">
+				a
+				<b data-ng-bind="message.to.displayName"></b>
+			</span>
+			<span data-ng-show="authentication.user && (authentication.user._id !== message.from._id)">
+				por
+				<b data-ng-bind="message.from.displayName"></b>
+			</span>
+		</em>
+	</small>
+</section>

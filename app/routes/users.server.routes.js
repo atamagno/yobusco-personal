@@ -17,6 +17,8 @@ module.exports = function(app) {
 	
 	app.route('/users-admin/:currentPage/:itemsPerPage').get(users.listByPage);
 
+	app.route('/user-by-username/:userName').get(users.findByUserName);
+
 	// Setting up the users profile api
 	app.route('/users/me').get(users.me);
 	app.route('/users')

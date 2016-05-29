@@ -10,9 +10,18 @@ var mongoose = require('mongoose'),
  * Job Schema
  */
 var JobSchema = new Schema({
+	createdBy: {
+		type: Schema.ObjectId,
+		ref: 'User'
+	},
 	user: {
 		type: Schema.ObjectId,
 		ref: 'User'
+	},
+	service_supplier: {
+		type: Schema.ObjectId,
+		ref: 'ServiceSupplier',
+		required: 'Por favor seleccione un prestador de servicios'
 	},
 	name: {
 		type: String,
@@ -24,11 +33,6 @@ var JobSchema = new Schema({
 		type: String,
 		default: '',
 		trim: true
-	},
-	service_supplier: {
-		type: Schema.ObjectId,
-		ref: 'ServiceSupplier',
-		required: 'Por favor seleccione un prestador de servicios'
 	},
 	status: {
 		type: Schema.ObjectId,
@@ -42,11 +46,11 @@ var JobSchema = new Schema({
 	start_date: {
 		type: Date,
 		default: Date.now,
-		required: 'Por favor ingrese una fecha de inicio',
+		required: 'Por favor ingrese una fecha de inicio'
 	},
 	expected_date: {
 		type: Date,
-		required: 'Por favor ingrese una fecha estimada',
+		required: 'Por favor ingrese una fecha estimada'
 	},
 	finish_date: {
 		type: Date
@@ -54,7 +58,7 @@ var JobSchema = new Schema({
 	pictures: [{
 		type: String,
 		default: []
-	}],
+	}]
 });
 
 mongoose.model('Job', JobSchema);

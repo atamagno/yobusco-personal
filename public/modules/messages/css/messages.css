@@ -1,0 +1,7 @@
+.messages-header-container {
+    border-bottom: 1px solid #eee;
+}
+
+.message-read {
+    background-color: #d2f9f1;
+}

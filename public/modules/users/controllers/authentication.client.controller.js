@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('users').controller('AuthenticationController',
-	function($scope, $http, $location, Authentication) {
+	function($scope, $rootScope, $http, $location, Authentication, MessageSearch) {
 		$scope.authentication = Authentication;
 
 		// If user is signed in then redirect back home
@@ -24,10 +24,22 @@ angular.module('users').controller('AuthenticationController',
 				// If successful we assign the response to the global user model
 				$scope.authentication.user = response;
 
+				MessageSearch.query({
+					userId: $scope.authentication.user._id,
+					condition: 'received'
+				}).$promise.then(function (response) {
+					var unreadMessages = response.filter(getUnread);
+					$rootScope.$broadcast('updateUnread', unreadMessages.length);
+				});
+
 				// And redirect to the index page
 				$location.path('/');
 			}).error(function(response) {
 				$scope.error = response.message;
 			});
 		};
+
+		function getUnread(message) {
+			return !message.read;
+		}
 	});

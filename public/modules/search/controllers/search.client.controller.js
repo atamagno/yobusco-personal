@@ -27,9 +27,15 @@ angular.module('search').controller('SuppliersSearchController',
             }
         };
 
-        $scope.navigateToResults = function() {
+        $scope.navigateToResults = function(serviceSubcategoryId) {
+
+            if (!serviceSubcategoryId)
+            {
+                serviceSubcategoryId = $scope.serviceSubcategoryId;
+            }
+
             $state.go('resultsServiceSupplier.list', {
-                serviceId: $scope.serviceSubcategoryId,
+                serviceId: serviceSubcategoryId,
                 currentPage: $scope.currentPage,
                 itemsPerPage: $scope.itemsPerPage
             });
