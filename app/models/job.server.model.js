@@ -66,7 +66,11 @@ var JobSchema = new Schema({
 	pictures: [{
 		type: String,
 		default: []
-	}]
+	}],
+	reported: {
+		type: Boolean,
+		default: false
+	}
 });
 
 mongoose.model('Job', JobSchema);

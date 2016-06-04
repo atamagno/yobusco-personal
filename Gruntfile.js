@@ -49,11 +49,6 @@
                         name: 'reviews',
                         file: 'database/reviews.json',
                         drop: true
-                    },
-                    {
-                        name: 'messages',
-                        file: 'database/messages.json',
-                        drop: true
                     }
                 ]
             }

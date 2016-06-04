@@ -115,64 +115,6 @@ exports.create = function(req, res) {
 			});
 		}
 	});
-
-/*
-	var job = new Job(req.body);
-	job.createdBy = req.user;
-
-	job.save(function(err) {
-		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
-		} else {
-			ServiceSupplier.findById(job.service_supplier).exec(function(err, servicesupplier) {
-				if (err) {
-					return res.status(400).send({
-						message: errorHandler.getErrorMessage(err)
-					});
-				} else {
-					servicesupplier.jobCount++;
-					servicesupplier.overall_rating++;
-					servicesupplier.save(function (err) {
-						if (err) {
-							return res.status(400).send({
-								message: errorHandler.getErrorMessage(err)
-							});
-						} else {
-
-							if (job.createdByUser) {
-								mailer.sendMail(res, 'new-job-for-service-supplier-email',
-									{
-										serviceSupplier: servicesupplier.display_name,
-										userName: job.createdBy.displayName
-									}, 'Nuevo trabajo', servicesupplier.email);
-								mailer.sendMail(res, 'new-job-by-user-email',
-									{
-										serviceSupplier: servicesupplier.display_name,
-										userName: job.createdBy.displayName
-									}, 'Nuevo trabajo', job.createdBy.email);
-							} else {
-								mailer.sendMail(res, 'new-job-for-user-email',
-									{
-										serviceSupplier: servicesupplier.display_name,
-										userName: job.createdBy.displayName
-									}, 'Nuevo trabajo', job.createdBy.email);
-								mailer.sendMail(res, 'new-job-by-service-supplier-email',
-									{
-										serviceSupplier: servicesupplier.display_name,
-										userName: job.createdBy.displayName
-									}, 'Nuevo trabajo', servicesupplier.email);
-							}
-
-							res.jsonp(job);
-						}
-					});
-				}
-			});
-		}
-	});
-	*/
 };
 
 /**
@@ -186,9 +128,58 @@ exports.read = function(req, res) {
  * Update a Job
  */
 exports.update = function(req, res) {
-	var job = req.job ;
-
+	var job = req.job;
 	job = _.extend(job , req.body);
+
+	if (job.reported) {
+		reportJob(req, res);
+	} else {
+		job.save(function(err) {
+			if (err) {
+				return res.status(400).send({
+					message: errorHandler.getErrorMessage(err)
+				});
+			} else {
+
+				var user = req.user;
+				Job.findOne(job)
+					.populate('service_supplier')
+					.populate('user').exec(function (err, job) {
+
+						mailer.sendMail(res, 'updated-job-for-user-updating-email',
+							{
+								userName: user.displayName,
+								jobName: job.name
+							}, 'Trabajo modificado', user.email);
+
+						var mailOptions = { jobName: job.name };
+						if (user.email == job.user.email) {
+							mailOptions = {
+								userName: job.service_supplier.display_name,
+								userUpdating: job.user.displayName,
+							};
+
+							var emailTo = job.service_supplier.email;
+						} else {
+							mailOptions = {
+								userName: job.user.displayName,
+								userUpdating: job.service_supplier.display_name,
+							};
+
+							var emailTo = job.user.email;
+						}
+
+						mailer.sendMail(res, 'updated-job-for-user-not-updating-email', mailOptions, 'Trabajo modificado', emailTo);
+
+						res.jsonp(job);
+					});
+			}
+		});
+	}
+};
+
+function reportJob(req, res) {
+	var job = req.job;
 
 	job.save(function(err) {
 		if (err) {
@@ -202,30 +193,28 @@ exports.update = function(req, res) {
 				.populate('service_supplier')
 				.populate('user').exec(function (err, job) {
 
-					mailer.sendMail(res, 'updated-job-for-user-updating-email',
-						{
-							userName: user.displayName,
-							jobName: job.name
-						}, 'Trabajo modificado', user.email);
+					var mailOptions = { userName: user.displayName, jobName: job.name };
+					var emailTo = user.email;
 
-					var mailOptions = { jobName: job.name };
+					// Send email to user who reported the job.
+					mailer.sendMail(res, 'job-reported-for-user-reporting-email', mailOptions, 'Trabajo reportado', emailTo);
+
+					// TODO: query for admin email, remove hardcoded email.
+					emailTo = 'yo.busco.test@gmail.com';
+
+					// Send email to admin.
+					mailer.sendMail(res, 'job-reported-for-admin-email', mailOptions, 'Trabajo reportado', emailTo);
+
 					if (user.email == job.user.email) {
-						mailOptions = {
-							userName: job.service_supplier.display_name,
-							userUpdating: job.user.displayName,
-						};
-
-						var emailTo = job.service_supplier.email;
+						mailOptions.userName =  job.service_supplier.display_name;
+						emailTo = job.service_supplier.email;
 					} else {
-						mailOptions = {
-							userName: job.user.displayName,
-							userUpdating: job.service_supplier.display_name,
-						};
-
-						var emailTo = job.user.email;
+						mailOptions.userName = job.user.displayName;
+						emailTo = job.user.email;
 					}
 
-					mailer.sendMail(res, 'updated-job-for-user-not-updating-email', mailOptions, 'Trabajo modificado', emailTo);
+					// Send email to reported user.
+					mailer.sendMail(res, 'job-reported-for-reported-user-email', mailOptions, 'Trabajo reportado', emailTo);
 
 					res.jsonp(job);
 				});
@@ -287,7 +276,7 @@ exports.list = function(req, res) {
  * Job middleware
  */
 exports.findJobByID = function(req, res, next, id) {
-	Job.findById(id).populate('service_supplier', 'display_name').populate('user').populate('status').exec(function(err, job) {
+	Job.findById(id).populate('service_supplier').populate('user').populate('status').exec(function(err, job) {
 		if (err) return next(err);
 		if (!job) return next(new Error('Error al cargar trabajo ' + id));
 		req.job = job ;
@@ -339,64 +328,86 @@ exports.listByUser = function(req, res) {
 
 	var jobUserId = req.params.jobUserId;
 	var isServiceSupplier = req.params.isServiceSupplier;
+	var status = req.params.status;
+	var currentPage = req.params.currentPage;
+	var itemsPerPage = req.params.itemsPerPage;
 
-	if (isServiceSupplier === 'true') {
-		ServiceSupplier.find({user: jobUserId}).exec(function (err, servicesuppliers) {
-			if (err) {
-				return res.status(400).send({
-					message: errorHandler.getErrorMessage(err)
-				});
-			} else {
-				var servicesupplier = servicesuppliers[0];
-				findJobsByUserID({service_supplier: servicesupplier._id}, req, res);
-			}
-		});
-	}
-	else {
-		findJobsByUserID({user: jobUserId}, req, res);
+	if (currentPage && itemsPerPage) {
+		currentPage = parseInt(currentPage);
+		itemsPerPage = parseInt(itemsPerPage);
+		var startIndex = (currentPage - 1) * itemsPerPage;
+
+		var paginationCondition = { skip: startIndex, limit: itemsPerPage };
+
+		// TODO: change this logic and add a query the status IDs. Remove harcoded IDs.
+		var searchCondition = {};
+		switch (status)
+		{
+			case 'finished':
+				searchCondition = { status: { $in: ['56264483477f11b0b2a6dd88','56263383477f11b0b2a6dd88']} };
+				break;
+			case 'active':
+				searchCondition = { status: { $in: ['56269183477f11b662a6dd88']} };
+				break;
+			case 'pending':
+				searchCondition = { status: { $in: ['56263383477f128bb2a6dd88']} };
+				break;
+		}
+
+		if (isServiceSupplier === 'true') {
+			ServiceSupplier.findOne({user: jobUserId}).exec(function (err, servicesupplier) {
+				if (err) {
+					return res.status(400).send({
+						message: errorHandler.getErrorMessage(err)
+					});
+				} else {
+					searchCondition.service_supplier = servicesupplier._id;
+					findJobsByUserID(searchCondition, paginationCondition, req, res);
+				}
+			});
+		}
+		else {
+			searchCondition.user = jobUserId;
+			findJobsByUserID(searchCondition, paginationCondition, req, res);
+		}
 	}
 };
 
-function findJobsByUserID(searchCondition, req, res) {
-	Job.find(searchCondition).populate('service_supplier', 'display_name').populate('status').exec(function (err, jobs) {
+function findJobsByUserID(searchCondition, paginationCondition, req, res) {
+
+	var response = {};
+	Job.count(searchCondition, function (err, count) {
 		if (err) {
 			return res.status(400).send({
 				message: errorHandler.getErrorMessage(err)
 			});
 		} else {
-			var status = req.params.status;
-			if (status === 'finished' || status === 'active' || status === 'pending') {
+			response.totalItems = count;
+			Job.find(searchCondition, {}, paginationCondition)
+				.populate('service_supplier', 'display_name')
+				.populate('status').exec(function (err, jobs) {
 
-				var filteredJobs = [];
-				if (status === 'finished') {
-					filteredJobs = jobs.filter(finishedFilter);
-				}
-				else {
-					statusFilterCondition = status;
-					filteredJobs = jobs.filter(byStatusFilter);
-				}
-
-				jobs = filteredJobs;
-			}
-
-			res.jsonp(jobs);
+					if (err) {
+						return res.status(400).send({
+							message: errorHandler.getErrorMessage(err)
+						});
+					} else {
+						response.jobs = jobs;
+						res.jsonp(response);
+					}
+				});
 		}
 	});
 }
 
-var statusFilterCondition = '';
-function byStatusFilter(job) {
-	return job.status.keyword=== statusFilterCondition;
-}
-
-function finishedFilter(job) {
-	return job.status.finished;
-}
-
 exports.listByServiceSupplier = function(req, res) {
 
+	// TODO: delete hardcoded ID, get id from query.
+	var pendingStatusID = "56263383477f128bb2a6dd88";
 	var serviceSupplierId = req.params.serviceSupplierId;
-	Job.find({service_supplier: serviceSupplierId}).populate('service_supplier', 'display_name')
+
+	// Return all jobs for service supplier except pending and reported.
+	Job.find({service_supplier: serviceSupplierId, status: { $ne: pendingStatusID }, reported: false }).populate('service_supplier', 'display_name')
 												   .populate('status').exec(function(err, jobs) {
 		if (err) {
 			return res.status(400).send({
@@ -410,8 +421,7 @@ exports.listByServiceSupplier = function(req, res) {
 
 exports.canUpdate = function(req, res, next) {
 	var job = req.job, user = req.user;
-	// TODO: need to change the second condition here.
-	if ((job.user.username !== user.username) && (job.service_supplier.display_name !== user.displayName)) {
+	if (!(job.user._id.equals(user._id)) && !(job.service_supplier.user.equals(user._id))) {
 		return res.status(401).send({
 			message: 'El usuario no est\u00e1 autorizado'
 		});

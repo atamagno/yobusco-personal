@@ -10,14 +10,10 @@ angular.module('jobs').config(
 				templateUrl: 'modules/jobs/views/jobs.client.view.html',
 			}).
 			state('jobs.list', {
-				url: '/list/:status',
+				url: '/list/:status/:currentPage',
 				templateUrl: 'modules/jobs/views/job-list.client.view.html'
 			}).
 			state('jobs.viewDetail', {
-				url: '/detail/:jobId',
-				templateUrl: 'modules/jobs/views/job-detail.client.view.html'
-			}).
-			state('viewJobDetail', {
 				url: '/detail/:jobId',
 				templateUrl: 'modules/jobs/views/job-detail.client.view.html'
 			}).

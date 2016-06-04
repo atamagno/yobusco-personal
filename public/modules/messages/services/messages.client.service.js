@@ -7,5 +7,14 @@ angular.module('messages')
 		})
 	.factory('MessageSearch',
 		function($resource) {
-			return $resource('messages-by-user/:userId/:condition', { userId: '@_id'})
+			return {
+				messagesByUser: $resource('messages-by-user/:userId/:condition/:currentPage/:itemsPerPage', { userId: '@_id'},
+					{
+						'query':  { method: 'GET', isArray: false },
+					}),
+				unreadMessages: $resource('unread-messages-by-user/:userId', { userId: '@_id'},
+					{
+						'query':  { method: 'GET', isArray: false },
+					})
+			}
 		});

@@ -1,24 +1,31 @@
-var config = require('./../config/env/development'),
-    mailer = require('./../app/controllers/mailer.server.controller'),
+var config = require('../config/env/development'),
+//mailer = require('../app/controllers/mailer.server.controller'),
     mongoose = require('mongoose');
 
 var db = mongoose.connect(config.dbConnectionString(), function(err) {
     if (err) {
-        console.error('Could not connect to MongoDB!');
+        console.log('Could not connect to MongoDB!');
         console.log(err);
-    }
-    else
-    {
+    } else {
         console.log('Successfully connected to MongoDB!');
     }
 });
+
+var now = new Date();
+function filterJobsToApprove(job) {
+    var jobCreatedDatePlusOneDay = job.created_date;
+    jobCreatedDatePlusOneDay.setMinutes(jobCreatedDatePlusOneDay.getMinutes() + 2); // TODO: change this for the line below.
+    //jobCreatedDatePlusOneDay.setDate(jobCreatedDatePlusOneDay.getDate() + 1);
+
+    return (jobCreatedDatePlusOneDay < now);
+}
 
 var approveJobApp = function() {
 
     var self = this;
 
     self.initialize = function() {
-        require('./../app/models/job.server.model.js');
+        require('../app/models/job.server.model.js');
     };
 
     self.start = function() {
@@ -30,31 +37,41 @@ var approveJobApp = function() {
         // Fetch all jobs with pending status.
         Job.find({ status: pendingStatusID }).exec(function(err, jobs) {
             if (err) {
-                console.error('%s: Error retrieving jobs', Date(Date.now));
+                console.log('%s: Error retrieving jobs.', Date(Date.now));
+                mongoose.connection.close();
             } else {
 
-                // TODO: compare new field created_date.
-                for (var i = 0; i < jobs.length; i++) {
+                if (jobs.length == 0) {
+                    console.log('%s: No pending jobs.', Date(Date.now));
+                    mongoose.connection.close();
+                } else {
 
-                    var jobToUpdate = jobs[i];
+                    var jobsToUpdate = jobs.filter(filterJobsToApprove);
+                    if (jobsToUpdate.length == 0) {
+                        console.log('%s: No pending jobs to approve.', Date(Date.now));
+                        mongoose.connection.close();
+                    } else {
+                        var updatedJobCount = 0;
+                        for (var i = 0; i < jobsToUpdate.length; i++) {
 
-                    var now = new Date();
-                    var jobCreatedDatePlusOneDay = jobs[i].created_date;
-                    jobCreatedDatePlusOneDay.setDate(jobCreatedDatePlusOneDay.getDate() + 1);
+                            var jobToUpdate = jobs[i];
 
-                    // If the job is pending after one day of being created, change the status to active.
-                    if (jobCreatedDatePlusOneDay < now)
-                    {
-                        jobToUpdate.status = activeStatusID;
-                        jobToUpdate.save(function(err, job) {
-                            if (err) {
-                                console.error('%s: Error updating job %s', Date(Date.now), job._id);
-                            } else {
+                            jobToUpdate.status = activeStatusID;
+                            jobToUpdate.save(function(err, job) {
+                                if (err) {
+                                    console.log('%s: Error updating job %s', Date(Date.now), job._id);
+                                    mongoose.connection.close();
+                                } else {
+                                    // TODO; send email here.
+                                    console.log('Succesfully updated job %s', job._id);
 
-                                // TODO; send email here.
-                                console.log('Succesfully updated job %s', job._id);
-                            }
-                        });
+                                    updatedJobCount++;
+                                    if (updatedJobCount == jobsToUpdate.length) {
+                                        mongoose.connection.close();
+                                    }
+                                }
+                            });
+                        }
                     }
                 }
             }

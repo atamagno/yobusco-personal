@@ -1,5 +1,12 @@
-.service-supplier-img {
+.service-supplier-img-container {
     padding: 10px;
+    width: 36%;
+}
+
+.service-supplier-img {
+    height: 212px;
+    box-shadow: 1px 1px 10px -3px rgba(0, 0, 0, .35);
+    border-radius: 5%;
 }
 
 .service-supplier-details-container {

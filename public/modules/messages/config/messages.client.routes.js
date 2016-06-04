@@ -10,7 +10,7 @@ angular.module('messages').config(
 				templateUrl: 'modules/messages/views/messages.client.view.html',
 			}).
 			state('messages.list', {
-				url: '/list/:condition',
+				url: '/list/:condition/:currentPage',
 				templateUrl: 'modules/messages/views/list-messages.client.view.html'
 			}).
 			state('messages.create', {

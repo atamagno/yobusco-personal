@@ -24,6 +24,6 @@ module.exports = function(app) {
 		.get(jobs.read)
 		.put(users.requiresLogin, jobs.canUpdate, jobs.update);
 
-	app.route('/jobs-by-user/:jobUserId/:isServiceSupplier/:status').get(jobs.listByUser);
+	app.route('/jobs-by-user/:jobUserId/:isServiceSupplier/:status/:currentPage/:itemsPerPage').get(users.requiresLogin, jobs.listByUser);
 	app.route('/jobs-by-servicesupplier/:serviceSupplierId').get(jobs.listByServiceSupplier);
 };

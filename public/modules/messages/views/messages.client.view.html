@@ -4,8 +4,8 @@
         <p class="lead">Mensajes</p>
         <div class="list-group">
             <a ui-sref=".create()" class="list-group-item">Crear mensaje</a>
-            <a ui-sref=".list({ condition: 'received' })" class="list-group-item">Recibidos</a>
-            <a ui-sref=".list({ condition: 'sent' })" class="list-group-item">Enviados</a>
+            <a ui-sref=".list({ condition: 'received', currentPage: 1 })" class="list-group-item">Recibidos</a>
+            <a ui-sref=".list({ condition: 'sent', currentPage: 1 })" class="list-group-item">Enviados</a>
         </div>
 
     </div>

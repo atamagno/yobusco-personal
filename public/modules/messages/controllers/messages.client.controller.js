@@ -6,20 +6,29 @@ angular.module('messages').controller('MessagesController',
 		$scope.authentication = Authentication;
 		$scope.alerts = Alerts;
 
-		$scope.userId = $stateParams.userId;
-		if ($stateParams.userId) {
-			UsersAdmin.get({
-				userId: $stateParams.userId
-			}).$promise.then(function(user) {
-				$scope.selectedServiceSupplier = user.displayName;
-			});
-		}
-		else {
-			$scope.selectedServiceSupplier = undefined;
-			ServiceSuppliers.query().$promise.then(function(servicesuppliers) {
-				$scope.servicesuppliers = servicesuppliers;
-			});
-		}
+		$scope.itemsPerPage = 6;
+		$scope.maxPages = 5;
+		$scope.showList = false;
+
+		if (!$scope.authentication.user) $state.go('home');
+
+		$scope.initCreateScreen = function() {
+
+			$scope.userId = $stateParams.userId;
+			if ($stateParams.userId) {
+				UsersAdmin.get({
+					userId: $stateParams.userId
+				}).$promise.then(function(user) {
+						$scope.selectedServiceSupplier = user.displayName;
+					});
+			}
+			else {
+				$scope.selectedServiceSupplier = undefined;
+				ServiceSuppliers.query().$promise.then(function(servicesuppliers) {
+					$scope.servicesuppliers = servicesuppliers;
+				});
+			}
+		};
 
 		$scope.openCreateMessageModal = function () {
 
@@ -36,8 +45,7 @@ angular.module('messages').controller('MessagesController',
 		// Create new Message
 		$scope.create = function() {
 
-			if (!$scope.content)
-			{
+			if (!$scope.content) {
 				Alerts.show('danger','El mensaje no puede estar vacio.');
 				return;
 			}
@@ -54,7 +62,12 @@ angular.module('messages').controller('MessagesController',
 				// Redirect after save
 				message.$save(function(response) {
 					Alerts.show('success','Mensaje enviado exitosamente');
-					$state.go("messages.list", { condition: 'sent'});
+
+					$state.go('messages.list', {
+						condition: 'sent',
+						currentPage: 1,
+						itemsPerPage: $scope.itemsPerPage
+					});
 				}, function(errorResponse) {
 					$scope.error = errorResponse.data.message;
 					Alerts.show('danger', $scope.error);
@@ -67,6 +80,10 @@ angular.module('messages').controller('MessagesController',
 
 		// Find a list of Messages
 		$scope.find = function() {
+
+			$scope.showList = false;
+			$scope.currentPage = $stateParams.currentPage;
+
 			$scope.messagesCondition = $stateParams.condition;
 			$scope.messageListTitle = 'Todos los mensajes';
 			$scope.messageConditionLabel = '.';
@@ -81,11 +98,24 @@ angular.module('messages').controller('MessagesController',
 					break;
 			}
 
-			MessageSearch.query({
+			MessageSearch.messagesByUser.query({
+				currentPage: $stateParams.currentPage,
+				itemsPerPage: $scope.itemsPerPage,
 				userId: $scope.authentication.user._id,
 				condition: $scope.messagesCondition
 			}).$promise.then(function (response) {
-				$scope.messages = response;
+					$scope.currentPage = $stateParams.currentPage;
+					$scope.totalItems = response.totalItems;
+					$scope.messages = response.messages;
+					$scope.showList = $scope.totalItems > 0;
+			});
+		};
+
+		$scope.navigateToResults = function() {
+			$state.go('messages.list', {
+				condition: $scope.messagesCondition,
+				currentPage: $scope.currentPage,
+				itemsPerPage: $scope.itemsPerPage
 			});
 		};
 
@@ -95,19 +125,13 @@ angular.module('messages').controller('MessagesController',
 				messageId: $stateParams.messageId
 			}).$promise.then(function(message) {
 				$scope.message = message;
-				MessageSearch.query({
-					userId: $scope.authentication.user._id,
-					condition: 'received'
+				MessageSearch.unreadMessages.query({
+					userId: $scope.authentication.user._id
 				}).$promise.then(function (response) {
-					var unreadMessages = response.filter(getUnread);
-					$rootScope.$broadcast('updateUnread', unreadMessages.length);
+					$rootScope.$broadcast('updateUnread', response.unreadCount);
 				});
 			});
 		};
-
-		function getUnread(message) {
-			return !message.read;
-		}
 	});
 
 angular.module('messages').controller('CreateMessageModalInstanceCtrl',

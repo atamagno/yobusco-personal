@@ -11,7 +11,8 @@
     "pictures": [
         'https://s3-sa-east-1.amazonaws.com/yobusco-bucket/job_pictures/564f560ca8df043c1db478c6/0'
     ],
-    "reviewCount" : NumberInt(1)
+    "reviewCount" : NumberInt(1),
+    "reported": false
 }
 { 
     "_id" : ObjectId("564f58f4a8df043c1db47877"), 
@@ -24,7 +25,8 @@
     "name": "Trabajo de plomería",
     "__v": NumberInt(0), 
     "pictures": [],
-    "reviewCount" : NumberInt(0)
+    "reviewCount" : NumberInt(0),
+    "reported": false
 }
 { 
     "_id" : ObjectId("564f5895a8df443c1db478c7"), 
@@ -38,7 +40,8 @@
     "name" : "Trabajo de plomería",
     "__v": NumberInt(0), 
     "pictures": [],
-    "reviewCount" : NumberInt(1)
+    "reviewCount" : NumberInt(1),
+    "reported": false
 }
 { 
     "_id" : ObjectId("564f58f4a8dff4343db478c7"), 
@@ -56,7 +59,8 @@
         'https://s3-sa-east-1.amazonaws.com/yobusco-bucket/job_pictures/564f58f4a8dff4343db478c7/1',
         'https://s3-sa-east-1.amazonaws.com/yobusco-bucket/job_pictures/564f58f4a8dff4343db478c7/2'
     ],
-    "reviewCount" : NumberInt(1)
+    "reviewCount" : NumberInt(1),
+    "reported": false
 }
 { 
     "_id" : ObjectId("564f58f4a855543c1d0178c7"), 
@@ -70,7 +74,8 @@
     "name" : "Trabajo de plomería",
     "__v": NumberInt(0), 
     "pictures": [],
-    "reviewCount" : NumberInt(0)
+    "reviewCount" : NumberInt(0),
+    "reported": false
 }
 { 
     "_id" : ObjectId("564f43d0a8df043c1db478ca"), 
@@ -88,7 +93,8 @@
         'https://s3-sa-east-1.amazonaws.com/yobusco-bucket/job_pictures/564f43d0a8df043c1db478ca/2',
         'https://s3-sa-east-1.amazonaws.com/yobusco-bucket/job_pictures/564f43d0a8df043c1db478ca/3'
     ],
-    "reviewCount" : NumberInt(1)
+    "reviewCount" : NumberInt(1),
+    "reported": false
 }
 {
     "_id" : ObjectId("5671cd95704142f81750c2ee"),
@@ -106,9 +112,9 @@
     "reviewCount" : NumberInt(0),
     "description" : "Colocación de cerámicos.",
     "name" : "Trabajo en baño",
-    "__v" : NumberInt(0)
+    "__v" : NumberInt(0),
+    "reported": false
 }
-
 {
     "_id" : ObjectId("5671cfd2704142f81750c2ef"),
     "user" : ObjectId("564e5a0cdcea1d4c0e61bdc8"),
@@ -125,7 +131,8 @@
     "reviewCount" : NumberInt(0),
     "description" : "Colocacion de mesada",
     "name" : "Trabajo en cocina",
-    "__v" : NumberInt(1)
+    "__v" : NumberInt(1),
+    "reported": false
 }
 {
     "_id" : ObjectId("5671d114704142f81750c2f0"),
@@ -141,7 +148,8 @@
     "reviewCount" : NumberInt(0),
     "description" : "Instalación de caños de gas para planta baja.",
     "name" : "Colocacion caños de gas",
-    "__v" : NumberInt(1)
+    "__v" : NumberInt(1),
+    "reported": false
 }
 {
     "_id" : ObjectId("5671d573704142f81750c2f1"),
@@ -157,7 +165,8 @@
     "reviewCount" : NumberInt(0),
     "description" : "Construcción de pileta.",
     "name" : "Construcción de pileta",
-    "__v" : NumberInt(1)
+    "__v" : NumberInt(1),
+    "reported": false
 }
 {
     "_id" : ObjectId("5671d79c704142f81750c2f2"),
@@ -173,5 +182,6 @@
     "reviewCount" : NumberInt(0),
     "description" : "Pintura interior de planta baja.",
     "name" : "Trabajo de pintura",
-    "__v" : NumberInt(7)
+    "__v" : NumberInt(7),
+    "reported": false
 }

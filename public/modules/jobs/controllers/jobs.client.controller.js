@@ -1,12 +1,22 @@
 'use strict';
 
 // UserJobs controller
-angular.module('jobs').controller('UserJobsController',
-	function($scope, $stateParams, $state, Authentication, Jobs, JobSearch, JobStatus, ServiceSuppliers, Reviews, $uibModal, Alerts, UserSearch) {
+angular.module('jobs')
+	.controller('UserJobsController',
+	function($scope, $stateParams, $state, Authentication, Jobs, JobDetails, JobStatus, ServiceSuppliers, Alerts) {
 		$scope.authentication = Authentication;
 		$scope.alerts = Alerts;
 
-		$scope.isServiceSupplier = $scope.authentication.user.roles.indexOf('servicesupplier') != -1;
+		$scope.itemsPerPage = 6;
+		$scope.maxPages = 5;
+		$scope.showList = false;
+
+		// If user is not signed in then redirect back home
+		if (!$scope.authentication.user) {
+			$state.go('home');
+		} else {
+			$scope.isServiceSupplier = $scope.authentication.user.roles.indexOf('servicesupplier') != -1;
+		}
 
 		JobStatus.query().$promise.then(function (statuses) {
 			for (var i = 0; i < statuses.length; i++) {
@@ -36,92 +46,6 @@ angular.module('jobs').controller('UserJobsController',
 			}
 		});
 
-		function getServiceSupplierForUser() {
-
-			var serviceSupplier;
-			for (var i = 0; i < $scope.servicesuppliers.length; i++) {
-				if ($scope.servicesuppliers[i].user._id === $scope.authentication.user._id) {
-					serviceSupplier = $scope.servicesuppliers[i];
-					break;
-				}
-			}
-
-			return serviceSupplier;
-		}
-
-		// Create new Job
-		$scope.create = function() {
-
-			// if logged user is a service supplier
-			if ($scope.isServiceSupplier) {
-				if ($scope.selectedUserName) {
-					UserSearch.get({
-						userName: $scope.selectedUserName
-					}).$promise.then(function (user) {
-						if (user._id) {
-
-							$scope.selectedServiceSupplier = getServiceSupplierForUser();
-
-							saveJob(user._id, $scope.selectedServiceSupplier._id, false);
-						}
-						else {
-							Alerts.show('danger','El nombre de usuario no existe.');
-						}
-					});
-				}
-				else
-				{
-					Alerts.show('danger','Debes ingresar un nombre de usuario.');
-				}
-			}
-			else {
-				if ($scope.selectedServiceSupplier && $scope.selectedServiceSupplier._id) {
-
-					saveJob($scope.authentication.user._id, $scope.selectedServiceSupplier._id, true);
-
-				} else {
-					Alerts.show('danger','Debes seleccionar un prestador de servicios');
-				}
-			}
-		};
-
-		function saveJob(userID, selectedServiceSupplierID, createdByUser) {
-
-			// Create new Job object
-			var job = new Jobs({
-				name: $scope.name,
-				description: $scope.description,
-				start_date: $scope.start_date,
-				expected_date: $scope.expected_date,
-				status: $scope.defaultStatus._id,
-				user: userID,
-				service_supplier: selectedServiceSupplierID,
-				createdByUser: createdByUser
-			});
-
-			// Redirect after save
-			job.$save(function (response) {
-				$state.go('jobs.viewDetail', { jobId: response._id});
-			}, function (errorResponse) {
-				$scope.error = errorResponse.data.message;
-				Alerts.show('danger', $scope.error);
-			});
-		}
-
-		// Find existing Job
-		$scope.findOne = function() {
-			Jobs.get({
-				jobId: $stateParams.jobId
-			}).$promise.then(function(job) {
-				$scope.job = job;
-				JobSearch.reviews.query({
-					jobId: $stateParams.jobId
-				}).$promise.then(function (response) {
-					$scope.reviews = response;
-				});
-			});
-		};
-
 		$scope.dateFormats = ['dd-MMMM-yyyy', 'yyyy/MM/dd', 'dd.MM.yyyy', 'shortDate'];
 		$scope.dateFormat = $scope.dateFormats[0];
 		$scope.today = new Date();
@@ -148,9 +72,23 @@ angular.module('jobs').controller('UserJobsController',
 			$scope.finishDateOpened = true;
 		};
 
+		$scope.navigateToJobDetails = function(jobId) {
+			$state.go('jobs.viewDetail', { jobId: jobId});
+		};
+
+		$scope.$on('updateReported', function(event, reportedJobs) {
+			$scope.reportedJobs = reportedJobs;
+		});
+	})
+	.controller('ListJobsController',
+	function($scope, $rootScope, $state, $stateParams, JobDetails) {
+
 		$scope.getAllJobs = function() {
 
+			$scope.showList = false;
 			$scope.jobstatus = $stateParams.status;
+			$scope.currentPage = $stateParams.currentPage;
+
 			$scope.jobListTitle = 'Todos los trabajos';
 			$scope.jobStatusLabel = '.';
 			switch ($scope.jobstatus) {
@@ -162,14 +100,85 @@ angular.module('jobs').controller('UserJobsController',
 					$scope.jobListTitle = 'Trabajos terminados';
 					$scope.jobStatusLabel = ' terminado.';
 					break;
+
 			}
 
-			JobSearch.jobs.query({
-				jobUserId: $scope.authentication.user._id,
-				isServiceSupplier: $scope.isServiceSupplier,
-				status: $scope.jobstatus
-			}).$promise.then(function (response) {
-					$scope.jobs = response;
+			if (!$scope.jobs) {
+				JobDetails.jobs.query({
+					currentPage: $stateParams.currentPage,
+					itemsPerPage: $scope.itemsPerPage,
+					jobUserId: $scope.authentication.user._id,
+					isServiceSupplier: $scope.isServiceSupplier,
+					status: 'all', //$scope.jobstatus
+				}).$promise.then(function (response) {
+						$scope.currentPage = $stateParams.currentPage;
+						$scope.jobs = response.jobs;
+						$scope.filterJobs = $scope.jobs;
+						$scope.totalItems = response.totalItems;
+						if ($scope.jobstatus != 'all') {
+							$scope.filterJobs = $scope.jobs.filter(filterByStatus);
+							$scope.totalItems = $scope.filterJobs.length;
+						}
+
+						$scope.showList = $scope.totalItems > 0;
+						var reportedJobList = $scope.jobs.filter(filterReported);
+						var reportedJobs = reportedJobList.length > 0;
+
+						$rootScope.$broadcast('updateReported', reportedJobs);
+					});
+			} else {
+
+				if ($scope.jobstatus != 'all') {
+					$scope.filterJobs = $scope.jobs.filter(filterByStatus);
+					$scope.totalItems = $scope.filterJobs.length;
+				}
+
+				$scope.showList = $scope.totalItems > 0;
+				var reportedJobList = $scope.jobs.filter(filterReported);
+				var reportedJobs = reportedJobList.length > 0;
+
+				$rootScope.$broadcast('updateReported', reportedJobs);
+			}
+		};
+
+		$scope.navigateToResults = function() {
+			$state.go('jobs.list', {
+				status: $scope.jobstatus,
+				currentPage: $scope.currentPage,
+				itemsPerPage: $scope.itemsPerPage
+			});
+		};
+
+		function filterByStatus(job) {
+			switch ($scope.jobstatus) {
+				case 'active':
+				case 'pending':
+					return ((job.status.keyword == $scope.jobstatus) && !job.reported);
+				case 'finished':
+					return (job.status.finished && !job.reported);
+				case 'reported':
+					return job.reported;
+			}
+		}
+
+		function filterReported(job) {
+			return job.reported;
+		}
+	})
+	.controller('JobDetailsController',
+	function($scope, $rootScope, $state, $stateParams, Reviews, $uibModal, Alerts, Jobs, JobDetails) {
+
+		// Find existing Job
+		$scope.findOne = function() {
+			Jobs.get({
+				jobId: $stateParams.jobId
+			}).$promise.then(function(job) {
+					$scope.job = job;
+					JobDetails.reviews.query({
+						jobId: $stateParams.jobId
+					}).$promise.then(function (response) {
+							$scope.reviews = response;
+						});
 				});
 		};
 
@@ -204,12 +213,30 @@ angular.module('jobs').controller('UserJobsController',
 			});
 		};
 
-		$scope.navigateToJobDetails = function(jobId) {
-			if ($scope.authentication.user) {
-				$state.go('jobs.viewDetail', { jobId: jobId});
-			} else {
-				$state.go('viewJobDetail', { jobId: jobId});
-			}
+		$scope.reportJob = function() {
+			var job = $scope.job;
+			job.reported = true;
+
+			job.$update(function() {
+				$rootScope.$broadcast('updateReported', true);
+				Alerts.show('success','Trabajo reportado exitosamente')
+				$state.go('jobs.viewDetail', { jobId: job._id});
+			}, function(errorResponse) {
+				$scope.error = errorResponse.data.message;
+				Alerts.show('danger',$scope.error);
+			});
+		};
+
+		$scope.openReportJobModal = function() {
+
+			var modalInstance = $uibModal.open({
+				templateUrl: 'reportJobModal',
+				controller: 'ReportJobModalInstanceCtrl'
+			});
+
+			modalInstance.result.then(function () {
+				$scope.reportJob()
+			});
 		};
 
 		$scope.addReview = function(reviewInfo) {
@@ -244,32 +271,6 @@ angular.module('jobs').controller('UserJobsController',
 			});
 		};
 
-		$scope.changeStatus = function(status) {
-			$scope.job.status = status;
-		};
-
-		// Update existing Job
-		$scope.update = function() {
-			var job = $scope.job;
-
-			if (job.service_supplier && job.service_supplier._id) {
-
-				if (job.status.finished && !job.finish_date) {
-					Alerts.show('danger', 'Debes seleccionar una fecha de finalizaci\u00f3n');
-				} else {
-					job.$update(function() {
-						$state.go('jobs.viewDetail', { jobId: job._id});
-					}, function(errorResponse) {
-						$scope.error = errorResponse.data.message;
-						Alerts.show('danger',$scope.error);
-					});
-				}
-
-			} else {
-				Alerts.show('danger','Debes seleccionar un prestador de servicios');
-			}
-		};
-
 		$scope.addImages = function(imagePaths) {
 
 			var job = $scope.job;
@@ -299,30 +300,6 @@ angular.module('jobs').controller('UserJobsController',
 			}, function(errorResponse) {
 				$scope.error = errorResponse.data.message;
 				Alerts.show('danger',$scope.error);
-			});
-		};
-
-		$scope.openCreateJobModal = function () {
-
-			var modalInstance = $uibModal.open({
-				templateUrl: 'createJobModal',
-				controller: 'CreateJobModalInstanceCtrl'
-			});
-
-			modalInstance.result.then(function () {
-				$scope.create()
-			});
-		};
-
-		$scope.openEditJobModal = function () {
-			
-			var modalInstance = $uibModal.open({
-				templateUrl: 'editJobByUserModal',
-				controller: 'EditJobModalInstanceCtrl'
-			});
-
-			modalInstance.result.then(function () {
-				$scope.update()
 			});
 		};
 
@@ -369,6 +346,131 @@ angular.module('jobs').controller('UserJobsController',
 
 			modalInstance.result.then(function (image) {
 				$scope.deleteImage(image)
+			});
+		};
+
+		$scope.changeStatus = function(status) {
+			$scope.job.status = status;
+		};
+
+		// Update existing Job
+		$scope.update = function() {
+			var job = $scope.job;
+
+			if (job.service_supplier && job.service_supplier._id) {
+
+				if (job.status.finished && !job.finish_date) {
+					Alerts.show('danger', 'Debes seleccionar una fecha de finalizaci\u00f3n');
+				} else {
+					job.$update(function() {
+						$state.go('jobs.viewDetail', { jobId: job._id});
+					}, function(errorResponse) {
+						$scope.error = errorResponse.data.message;
+						Alerts.show('danger',$scope.error);
+					});
+				}
+
+			} else {
+				Alerts.show('danger','Debes seleccionar un prestador de servicios');
+			}
+		};
+
+		$scope.openEditJobModal = function () {
+
+			var modalInstance = $uibModal.open({
+				templateUrl: 'editJobByUserModal',
+				controller: 'EditJobModalInstanceCtrl'
+			});
+
+			modalInstance.result.then(function () {
+				$scope.update()
+			});
+		};
+	})
+	.controller('CreateJobController',
+	function($scope, $state, Jobs, $uibModal, Alerts, UserSearch) {
+
+		function getServiceSupplierForUser() {
+
+			var serviceSupplier;
+			for (var i = 0; i < $scope.servicesuppliers.length; i++) {
+				if ($scope.servicesuppliers[i].user._id === $scope.authentication.user._id) {
+					serviceSupplier = $scope.servicesuppliers[i];
+					break;
+				}
+			}
+
+			return serviceSupplier;
+		}
+
+		// Create new Job
+		$scope.create = function() {
+
+			// if logged user is a service supplier
+			if ($scope.isServiceSupplier) {
+				if ($scope.selectedUserName) {
+					UserSearch.get({
+						userName: $scope.selectedUserName
+					}).$promise.then(function (user) {
+							if (user._id) {
+
+								$scope.selectedServiceSupplier = getServiceSupplierForUser();
+
+								saveJob(user._id, $scope.selectedServiceSupplier._id, false);
+							}
+							else {
+								Alerts.show('danger','El nombre de usuario no existe.');
+							}
+						});
+				}
+				else
+				{
+					Alerts.show('danger','Debes ingresar un nombre de usuario.');
+				}
+			}
+			else {
+				if ($scope.selectedServiceSupplier && $scope.selectedServiceSupplier._id) {
+
+					saveJob($scope.authentication.user._id, $scope.selectedServiceSupplier._id, true);
+
+				} else {
+					Alerts.show('danger','Debes seleccionar un prestador de servicios');
+				}
+			}
+		};
+
+		function saveJob(userID, selectedServiceSupplierID, createdByUser) {
+
+			// Create new Job object
+			var job = new Jobs({
+				name: $scope.name,
+				description: $scope.description,
+				start_date: $scope.start_date,
+				expected_date: $scope.expected_date,
+				status: $scope.defaultStatus._id,
+				user: userID,
+				service_supplier: selectedServiceSupplierID,
+				createdByUser: createdByUser
+			});
+
+			// Redirect after save
+			job.$save(function (response) {
+				$state.go('jobs.viewDetail', { jobId: response._id});
+			}, function (errorResponse) {
+				$scope.error = errorResponse.data.message;
+				Alerts.show('danger', $scope.error);
+			});
+		}
+
+		$scope.openCreateJobModal = function () {
+
+			var modalInstance = $uibModal.open({
+				templateUrl: 'createJobModal',
+				controller: 'CreateJobModalInstanceCtrl'
+			});
+
+			modalInstance.result.then(function () {
+				$scope.create()
 			});
 		};
 	});
@@ -514,6 +616,18 @@ angular.module('jobs').controller('OpenImagesModalInstanceCtrl',
 	});
 
 angular.module('jobs').controller('ApproveJobModalInstanceCtrl',
+	function ($scope, $uibModalInstance) {
+
+		$scope.ok = function () {
+			$uibModalInstance.close();
+		};
+
+		$scope.cancel = function () {
+			$uibModalInstance.dismiss('cancel');
+		};
+	});
+
+angular.module('jobs').controller('ReportJobModalInstanceCtrl',
 	function ($scope, $uibModalInstance) {
 
 		$scope.ok = function () {

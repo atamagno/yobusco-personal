@@ -8,22 +8,16 @@ angular.module('core').controller('HeaderController',
 
 		if ($scope.authentication.user)
 		{
-			MessageSearch.query({
-				userId: $scope.authentication.user._id,
-				condition: 'received'
+			MessageSearch.unreadMessages.query({
+				userId: $scope.authentication.user._id
 			}).$promise.then(function (response) {
-				var unreadMessages = response.filter(getUnread);
-				$scope.newMessages = unreadMessages.length;
+				$scope.newMessages = response.unreadCount;
 			});
 		}
 
 		$scope.$on('updateUnread', function(event, unreadMessages) {
 			$scope.newMessages = unreadMessages;
 		});
-
-		function getUnread(message) {
-			return !message.read;
-		}
 
 		$scope.toggleCollapsibleMenu = function() {
 			$scope.isCollapsed = !$scope.isCollapsed;

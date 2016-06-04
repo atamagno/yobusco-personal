@@ -5,10 +5,19 @@
     <p class="text-center">Conectando consumidores y proveedores de servicios en construcci&#243;n</p>
     <form role="form">
         <div class="form-group search-input">
-            <input type="text" class="form-control center-block" data-ng-model="selectedKeyword" typeahead-min-length="1"
-                   data-ng-keypress="$event.keyCode == 13 && navigateToResultsFromKeywordSearch()"
-                   uib-typeahead="serviceSubcategoryKeyword as serviceSubcategoryKeyword.keyword for serviceSubcategoryKeyword in serviceSubcategoriesKeywords | filter:$viewValue | limitTo:4"
-                   placeholder="Ingresa el rubro que buscas." typeahead-template-url="customTemplate.html" />
+
+            <div class="input-group">
+                <input type="text" class="form-control center-block" data-ng-model="selectedKeyword" typeahead-min-length="1"
+                       data-ng-keypress="$event.keyCode == 13 && navigateToResultsFromKeywordSearch()"
+                       uib-typeahead="serviceSubcategoryKeyword as serviceSubcategoryKeyword.keyword for serviceSubcategoryKeyword in serviceSubcategoriesKeywords | filter:$viewValue | limitTo:4"
+                       placeholder="Ingresa el rubro que buscas." typeahead-template-url="customTemplate.html" />
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" data-ng-click="navigateToResultsFromKeywordSearch()">
+                        <span class="glyphicon glyphicon-search"></span>
+                    </button>
+                </span>
+            </div>
+
             <!--<div class="advanced-search-link-container">
                 <a class="advanced-search-link" data-ng-click="isCollapsed = !isCollapsed">b&uacute;squeda avanzada</a>
             </div>-->

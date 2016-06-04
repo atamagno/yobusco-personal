@@ -4,6 +4,10 @@ angular.module('servicesuppliers').controller('ServiceSuppliersDetailController'
     function($scope, $state, $stateParams, Authentication, ServiceSuppliers, ServiceSuppliersDetails, Reviews, Alerts, $uibModal) {
         $scope.authentication = Authentication;
 
+        if ($scope.authentication.user) {
+            $scope.isServiceSupplier = $scope.authentication.user.roles.indexOf('servicesupplier') != -1;
+        }
+
         ServiceSuppliers.get({
             servicesupplierId: $stateParams.servicesupplierId
         }).$promise.then(function(servicesupplier) {
@@ -23,11 +27,7 @@ angular.module('servicesuppliers').controller('ServiceSuppliersDetailController'
             });
 
         $scope.navigateToJobDetails = function(jobId) {
-            if ($scope.authentication.user) {
-                $state.go('servicesupplier.viewJobDetail', { servicesupplierId: $stateParams.servicesupplierId, jobId: jobId });
-            } else {
-                $state.go('viewJobDetail', { jobId: jobId});
-            }
+            $state.go('servicesupplier.viewJobDetail', { servicesupplierId: $stateParams.servicesupplierId, jobId: jobId });
         };
 
         $scope.rate = 3;

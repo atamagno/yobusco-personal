@@ -134,15 +134,53 @@ exports.listByUser = function(req, res) {
 
 	var userId = req.params.userId;
 	var messageCondition = req.params.condition;
+	var currentPage = req.params.currentPage;
+	var itemsPerPage = req.params.itemsPerPage;
 
-	var searchCondition = (messageCondition == 'sent') ? { from: userId } : { to: userId };
-	Message.find(searchCondition).sort('-created').populate('to', 'displayName').populate('from', 'displayName').exec(function(err, messages) {
+	if (currentPage && itemsPerPage) {
+		currentPage = parseInt(currentPage);
+		itemsPerPage = parseInt(itemsPerPage);
+		var startIndex = (currentPage - 1) * itemsPerPage;
+
+		var paginationCondition = { skip: startIndex, limit: itemsPerPage };
+		var searchCondition = (messageCondition == 'sent') ? {from: userId} : {to: userId};
+
+		var response = {};
+		Message.count(searchCondition, function (err, count) {
+			if (err) {
+				return res.status(400).send({
+					message: errorHandler.getErrorMessage(err)
+				});
+			} else {
+				response.totalItems = count;
+				Message.find(searchCondition, {}, paginationCondition).sort('-created').populate('to', 'displayName').populate('from', 'displayName').exec(function (err, messages) {
+					if (err) {
+						return res.status(400).send({
+							message: errorHandler.getErrorMessage(err)
+						});
+					} else {
+						response.messages = messages;
+						res.jsonp(response);
+					}
+				});
+			}
+		});
+	}
+};
+
+exports.unreadByUser = function(req, res) {
+
+	var userId = req.params.userId;
+
+	var searchCondition = { to: userId, read: false };
+	Message.count(searchCondition, function (err, count) {
 		if (err) {
 			return res.status(400).send({
 				message: errorHandler.getErrorMessage(err)
 			});
 		} else {
-			res.jsonp(messages);
+			var reponse = { unreadCount: count };
+			res.jsonp(reponse);
 		}
 	});
 };

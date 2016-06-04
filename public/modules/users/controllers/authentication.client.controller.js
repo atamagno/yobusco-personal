@@ -24,12 +24,10 @@ angular.module('users').controller('AuthenticationController',
 				// If successful we assign the response to the global user model
 				$scope.authentication.user = response;
 
-				MessageSearch.query({
-					userId: $scope.authentication.user._id,
-					condition: 'received'
+				MessageSearch.unreadMessages.query({
+					userId: $scope.authentication.user._id
 				}).$promise.then(function (response) {
-					var unreadMessages = response.filter(getUnread);
-					$rootScope.$broadcast('updateUnread', unreadMessages.length);
+					$rootScope.$broadcast('updateUnread', response.unreadCount);
 				});
 
 				// And redirect to the index page
@@ -38,8 +36,4 @@ angular.module('users').controller('AuthenticationController',
 				$scope.error = response.message;
 			});
 		};
-
-		function getUnread(message) {
-			return !message.read;
-		}
 	});
